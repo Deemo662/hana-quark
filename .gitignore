@@ -4,4 +4,3 @@ __pycache__/
 data/cache/
 data/tracker.db
 .DS_Store
-output/
