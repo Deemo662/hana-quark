@@ -152,13 +152,27 @@ class CacheProvider(DataProvider):
         for code in codes:
             row = {'code': code}
             
-            # ---- 从K线获取当日行情 ----
+            # ---- 从K线获取当日行情+估值（★PE/PB/PS/PCF已嵌入K线） ----
             kline = self.cache.get_kline(code, date_str, date_str)
             if kline is not None and len(kline) > 0:
                 latest_k = kline.iloc[-1]
                 row['close'] = latest_k.get('close', np.nan)
                 row['is_suspended'] = latest_k.get('is_suspend', 0)
                 row['is_st'] = latest_k.get('is_st', 0)
+                # ★估值数据直接从K线取（每天都有）
+                row['pe_ttm'] = self._safe_float(latest_k.get('pe_ttm'))
+                row['pb'] = self._safe_float(latest_k.get('pb'))
+                row['ps_ttm'] = self._safe_float(latest_k.get('ps_ttm'))
+                row['pcf_ttm'] = self._safe_float(latest_k.get('pcf_ttm'))
+                # 市值：用 close × volume/换手率 粗略估算（换手率=volume/流通股本，所以流通股本=volume/换手率）
+                turnover = self._safe_float(latest_k.get('turnover'))
+                vol = self._safe_float(latest_k.get('volume'))
+                close_p = self._safe_float(latest_k.get('close'))
+                if turnover and vol and close_p and turnover > 0:
+                    # circ_mv ≈ close × volume / turnover_rate
+                    # 这是粗略估计，更准确的需要从财务数据获取
+                    row['circ_mv'] = close_p * vol / (turnover / 100)
+                    row['total_mv'] = row['circ_mv']  # 近似
             
             # ---- ★PIT原则：获取该日期前已披露的最新财务数据 ----
             fin = self.cache.get_latest_financial_before_date(code, date_str)

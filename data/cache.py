@@ -80,6 +80,10 @@ class DataCache:
                 volume REAL,                     -- 成交量（股）
                 amount REAL,                     -- 成交额（元）
                 turnover REAL,                   -- 换手率（%）
+                pe_ttm REAL,                     -- 市盈率(TTM) ★Baostock K线自带
+                pb REAL,                         -- 市净率 ★Baostock K线自带
+                ps_ttm REAL,                     -- 市销率(TTM) ★Baostock K线自带
+                pcf_ttm REAL,                    -- 市现率(TTM) ★Baostock K线自带
                 is_st INTEGER DEFAULT 0,         -- 当日是否ST
                 is_suspend INTEGER DEFAULT 0,    -- 当日是否停牌（1=停牌）
                 created_at TEXT DEFAULT (datetime('now')),

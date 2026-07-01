@@ -166,7 +166,7 @@ class BaostockFetcher:
         df = pd.DataFrame(rows, columns=rs.fields)
         n = len(df)
         
-        # K线
+        # K线（★含PE/PB/PS/PCF，每天都有，回测的关键）
         kline = pd.DataFrame({
             'code': [raw_code]*n,
             'trade_date': df['date'].str.replace('-',''),
@@ -178,6 +178,10 @@ class BaostockFetcher:
             'volume': pd.to_numeric(df['volume'], errors='coerce'),
             'amount': pd.to_numeric(df['amount'], errors='coerce'),
             'turnover': pd.to_numeric(df['turn'], errors='coerce'),
+            'pe_ttm': pd.to_numeric(df['peTTM'], errors='coerce'),
+            'pb': pd.to_numeric(df['pbMRQ'], errors='coerce'),
+            'ps_ttm': pd.to_numeric(df['psTTM'], errors='coerce'),
+            'pcf_ttm': pd.to_numeric(df['pcfNcfTTM'], errors='coerce'),
             'is_suspend': (pd.to_numeric(df['volume'], errors='coerce') == 0).astype(int),
             'is_st': (df['isST'] == '1').astype(int),
         })
