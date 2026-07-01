@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📊 量化选股报告 — 2026-07-01</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background:#f5f5f5; color:#333; padding:20px; }
+.card { background:#fff; border-radius:12px; padding:24px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,.1); }
+h1 { font-size:24px; margin-bottom:4px; }
+h2 { font-size:18px; color:#666; margin-bottom:16px; }
+.subtitle { color:#999; font-size:14px; margin-bottom:20px; }
+.grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:16px; margin-bottom:20px; }
+.stat { background:#f8f9fa; border-radius:8px; padding:16px; text-align:center; }
+.stat-value { font-size:28px; font-weight:700; }
+.stat-label { font-size:12px; color:#999; margin-top:4px; }
+.positive { color:#16a34a; }
+.negative { color:#dc2626; }
+table { width:100%; border-collapse:collapse; }
+th { text-align:left; padding:10px 12px; border-bottom:2px solid #e5e7eb; font-size:13px; color:#666; font-weight:600; }
+td { padding:10px 12px; border-bottom:1px solid #f3f4f6; font-size:14px; }
+tr:hover { background:#f8f9fa; }
+.rank { display:inline-block; width:24px; height:24px; line-height:24px; text-align:center; border-radius:6px; font-size:12px; font-weight:700; background:#e5e7eb; }
+.rank-1 { background:#fbbf24; color:#fff; }
+.rank-2 { background:#94a3b8; color:#fff; }
+.rank-3 { background:#d97706; color:#fff; }
+.chart { width:100%; height:120px; }
+.footer { text-align:center; color:#999; font-size:12px; margin-top:20px; }
+.note { background:#fef3c7; border-left:4px solid #f59e0b; padding:12px 16px; border-radius:0 8px 8px 0; margin-top:20px; font-size:13px; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>📊 量化选股日报</h1>
+  <h2>市值+毛利率+ROIC+6月波动率+PS</h2>
+  <div class="subtitle">2026-07-01 ｜ 数据源: AkShare 实时 ｜ 自动生成</div>
+
+  <div class="grid">
+    <div class="stat">
+      <div class="stat-value">¥98,317</div>
+      <div class="stat-label">模拟总资产</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value negative">-1.68%</div>
+      <div class="stat-label">累计收益</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value negative">-0.22%</div>
+      <div class="stat-label">超额收益(vs 沪深300)</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">2/6</div>
+      <div class="stat-label">正收益天数</div>
+    </div>
+  </div>
+
+  <svg class="chart" viewBox="0 0 280 60">
+    <line x1="0" y1="30" x2="280" y2="30" stroke="#e5e7eb" stroke-width="1"/>
+    <polyline points="4.0,23.3 58.4,47.7 112.8,32.8 167.2,51.4 221.6,4.0 276.0,56.0" fill="none" stroke="#dc2626" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <div style="display:flex; justify-content:space-between; font-size:11px; color:#999; margin-top:4px;">
+    <span>2026-06-26</span>
+    <span>2026-07-01</span>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📋 今日选股 TOP 20</h2>
+  <table>
+    <thead><tr><th>#</th><th>代码</th><th>名称</th><th>得分</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span class="rank rank-1">1</span></td>
+        <td style="font-family:monospace">002003</td>
+        <td>伟星股份</td>
+        <td style="font-weight:600">78.1</td>
+      </tr>
+      <tr>
+        <td><span class="rank rank-2">2</span></td>
+        <td style="font-family:monospace">000651</td>
+        <td>格力电器</td>
+        <td style="font-weight:600">75.2</td>
+      </tr>
+      <tr>
+        <td><span class="rank rank-3">3</span></td>
+        <td style="font-family:monospace">300750</td>
+        <td>宁德时代</td>
+        <td style="font-weight:600">71.4</td>
+      </tr>
+      <tr>
+        <td><span class="rank ">4</span></td>
+        <td style="font-family:monospace">600276</td>
+        <td>恒瑞医药</td>
+        <td style="font-weight:600">66.7</td>
+      </tr>
+      <tr>
+        <td><span class="rank ">5</span></td>
+        <td style="font-family:monospace">000568</td>
+        <td>泸州老窖</td>
+        <td style="font-weight:600">64.8</td>
+      </tr>
+      <tr>
+        <td><span class="rank ">6</span></td>
+        <td style="font-family:monospace">601899</td>
+        <td>紫金矿业</td>
+        <td style="font-weight:600">63.8</td>
+      </tr>
+      <tr>
+        <td><span class="rank ">7</span></td>
+        <td style="font-family:monospace">601012</td>
+        <td>隆基绿能</td>
+        <td style="font-weight:600">61.9</td>
+      </tr>
+      <tr>
+        <td><span class="rank ">8</span></td>
+        <td style="font-family:monospace">002594</td>
+        <td>比亚迪</td>
+        <td style="font-weight:600">59.0</td>
+      </tr>
+      <tr>
+        <td><span class="rank ">9</span></td>
+        <td style="font-family:monospace">300001</td>
+        <td>特锐德</td>
+        <td style="font-weight:600">53.3</td>
+      </tr>
+      <tr>
+        <td><span class="rank ">10</span></td>
+        <td style="font-family:monospace">000333</td>
+        <td>美的集团</td>
+        <td style="font-weight:600">52.4</td>
+      </tr>
+      <tr>
+        <td><span class="rank ">11</span></td>
+        <td style="font-family:monospace">600030</td>
+        <td>中信证券</td>
+        <td style="font-weight:600">51.4</td>
+      </tr>
+      <tr>
+        <td><span class="rank ">12</span></td>
+        <td style="font-family:monospace">300003</td>
+        <td>乐普医疗</td>
+        <td style="font-weight:600">47.6</td>
+      </tr>
+      <tr>
+        <td><span class="rank ">13</span></td>
+        <td style="font-family:monospace">300002</td>
+        <td>神州泰岳</td>
+        <td style="font-weight:600">46.7</td>
+      </tr>
+      <tr>
+        <td><span class="rank ">14</span></td>
+        <td style="font-family:monospace">300760</td>
+        <td>迈瑞医疗</td>
+        <td style="font-weight:600">45.7</td>
+      </tr>
+      <tr>
+        <td><span class="rank ">15</span></td>
+        <td style="font-family:monospace">600519</td>
+        <td>贵州茅台</td>
+        <td style="font-weight:600">45.7</td>
+      </tr>
+      <tr>
+        <td><span class="rank ">16</span></td>
+        <td style="font-family:monospace">600887</td>
+        <td>伊利股份</td>
+        <td style="font-weight:600">41.9</td>
+      </tr>
+      <tr>
+        <td><span class="rank ">17</span></td>
+        <td style="font-family:monospace">000858</td>
+        <td>五粮液</td>
+        <td style="font-weight:600">41.0</td>
+      </tr>
+      <tr>
+        <td><span class="rank ">18</span></td>
+        <td style="font-family:monospace">000002</td>
+        <td>万科A</td>
+        <td style="font-weight:600">39.5</td>
+      </tr>
+      <tr>
+        <td><span class="rank ">19</span></td>
+        <td style="font-family:monospace">600036</td>
+        <td>招商银行</td>
+        <td style="font-weight:600">35.7</td>
+      </tr>
+      <tr>
+        <td><span class="rank ">20</span></td>
+        <td style="font-family:monospace">002415</td>
+        <td>海康威视</td>
+        <td style="font-weight:600">33.8</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2>📈 近期绩效跟踪</h2>
+  <table>
+    <thead><tr><th>日期</th><th>总资产</th><th>日收益</th><th>累计收益</th><th>沪深300日收益</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>2026-06-26</td>
+        <td>¥99,374</td>
+        <td class="negative">-0.63%</td>
+        <td class="negative">-0.63%</td>
+        <td class="negative">-0.14%</td>
+      </tr>
+      <tr>
+        <td>2026-06-27</td>
+        <td>¥98,585</td>
+        <td class="negative">-0.79%</td>
+        <td class="negative">-1.42%</td>
+        <td class="negative">-0.07%</td>
+      </tr>
+      <tr>
+        <td>2026-06-28</td>
+        <td>¥99,064</td>
+        <td class="positive">+0.49%</td>
+        <td class="negative">-0.94%</td>
+        <td class="positive">+0.55%</td>
+      </tr>
+      <tr>
+        <td>2026-06-29</td>
+        <td>¥98,465</td>
+        <td class="negative">-0.60%</td>
+        <td class="negative">-1.53%</td>
+        <td class="positive">+0.45%</td>
+      </tr>
+      <tr>
+        <td>2026-06-30</td>
+        <td>¥99,995</td>
+        <td class="positive">+1.55%</td>
+        <td class="negative">-0.00%</td>
+        <td class="negative">-1.00%</td>
+      </tr>
+      <tr>
+        <td>2026-07-01</td>
+        <td>¥98,317</td>
+        <td class="negative">-1.68%</td>
+        <td class="negative">-1.68%</td>
+        <td class="negative">-1.39%</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="footer">
+  量化选股系统 v1.0 ｜ 基于董鹏飞《基本面量化投资策略》 ｜ 生成时间: 2026-07-01
+</div>
+
+</body>
+</html>
