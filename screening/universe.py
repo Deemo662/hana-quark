@@ -36,8 +36,9 @@ class UniverseBuilder:
 
         # 1. 剔除上市不足180天的新股/次新股
         if self.exclude_new_less_days and "list_date" in stock_list.columns:
-            cutoff = trade_date - timedelta(days=self.exclude_new_less_days)
-            valid_new = stock_list[stock_list["list_date"] <= cutoff]
+            cutoff = pd.Timestamp(trade_date) - timedelta(days=self.exclude_new_less_days)
+            list_dates = pd.to_datetime(stock_list["list_date"], errors='coerce')
+            valid_new = stock_list[list_dates <= cutoff]
             codes &= set(valid_new.index.tolist() if isinstance(valid_new.index, pd.Index)
                          else valid_new["code"].tolist())
 
