@@ -1,0 +1,101 @@
+# 策略定义
+strategies:
+  # ===== 书中验证的最强策略 =====
+
+  # 🥇 全书最佳：市值+毛利率+ROIC+6月波动率+PS 五因子
+  best_five_factor:
+    name: "市值+毛利率+ROIC+6月波动率+PS"
+    book_ref: "第15章，表15-52"
+    book_cagr_20: 18.44   # 书中20只年化
+    book_cagr_40: 16.75   # 书中40只年化
+    factors:
+      - size_market_cap         # 市值（升序=小市值优先）
+      - quality_gross_margin     # 毛利率
+      - quality_roic            # 投入资本回报率
+      - momentum_volatility_6m   # 6个月波动率（升序=低波优先）
+      - value_ps_ttm            # 市销率（升序=低估值优先）
+    weights: equal
+    top_n: 20
+    rebalance: monthly
+    sort_orders:
+      size_market_cap: asc
+      quality_gross_margin: desc
+      quality_roic: desc
+      momentum_volatility_6m: asc
+      value_ps_ttm: asc
+
+  # 🥈 ROE+6月波动率 双因子
+  roe_lowvol:
+    name: "ROE+6月波动率"
+    book_ref: "第15章，表15-19"
+    book_cagr_20: 16.90
+    book_cagr_40: 16.48
+    factors:
+      - quality_roe
+      - momentum_volatility_6m
+    weights: equal
+    top_n: 20
+    rebalance: monthly
+    sort_orders:
+      quality_roe: desc
+      momentum_volatility_6m: asc
+
+  # 🥉 中小市值改进神奇公式
+  magic_formula_improved:
+    name: "中小市值改进神奇公式"
+    book_ref: "第15章，表15-61"
+    book_cagr_20: 16.48
+    book_cagr_40: 15.52
+    factors:
+      - size_market_cap
+      - momentum_volatility_6m
+      - quality_roic
+      - quality_gross_margin
+      - value_ev2ebitda
+    weights: equal
+    top_n: 20
+    rebalance: monthly
+    sort_orders:
+      size_market_cap: asc
+      momentum_volatility_6m: asc
+      quality_roic: desc
+      quality_gross_margin: desc
+      value_ev2ebitda: asc
+
+  # PB+低波动 双因子（保守型）
+  pb_lowvol:
+    name: "PB+6月波动率"
+    book_ref: "第15章，表15-10"
+    book_cagr_20: 15.14
+    book_cagr_40: 14.92
+    factors:
+      - value_pb
+      - momentum_volatility_6m
+    weights: equal
+    top_n: 20
+    rebalance: monthly
+    sort_orders:
+      value_pb: asc
+      momentum_volatility_6m: asc
+
+  # EV/Sales+ROE+权益/带息债务+波动率+动量 五因子
+  five_factor_v2:
+    name: "EV/Sales+ROE+权益/带息债务+6月波动率+3月动量"
+    book_ref: "第15章，表15-46"
+    book_cagr_20: 17.26
+    book_cagr_40: 17.23
+    factors:
+      - value_ev2sales
+      - quality_roe
+      - safety_equity2debt
+      - momentum_volatility_6m
+      - momentum_3m
+    weights: equal
+    top_n: 20
+    rebalance: monthly
+    sort_orders:
+      value_ev2sales: asc
+      quality_roe: desc
+      safety_equity2debt: desc
+      momentum_volatility_6m: asc
+      momentum_3m: desc

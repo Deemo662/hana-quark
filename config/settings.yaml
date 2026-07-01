@@ -1,0 +1,28 @@
+# 全局配置
+paths:
+  data_dir: "data/cache"
+  output_dir: "output/reports"
+
+data:
+  start_date: "2015-01-01"
+
+# 股票池配置（按董鹏飞书本定义）
+universe:
+  exclude_st: true
+  exclude_suspended: true
+  exclude_new_less_days: 180
+  exclude_micro_cap_pct: 0.15
+
+# AkShare配置
+akshare:
+  rate_limit: 0.5
+
+# 回测参数
+backtest:
+  initial_capital: 100000
+  commission: 0.00025
+  stamp_duty: 0.0005
+  slippage: 0.001
+
+logging:
+  level: "INFO"
