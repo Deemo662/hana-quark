@@ -61,8 +61,9 @@ class FactorScorer:
         scores = {}
         for fname, values in factor_values.items():
             order = self.sort_orders.get(fname, "desc")
-            # rank: 升序则值越小rank越高
             ascending = order == "asc"
+            # ★去重：保留每个股票的第一个值（避免reindex错误）
+            values = values[~values.index.duplicated(keep='first')]
             ranked = values.rank(ascending=ascending, pct=True)
             w = weights.get(fname, 0)
             scores[f"{fname}_score"] = ranked * w * 100
