@@ -99,3 +99,37 @@ strategies:
       safety_equity2debt: desc
       momentum_volatility_6m: asc
       momentum_3m: desc
+
+  # 🏆 改进v2: 聚宽回测验证最优 (2021-2025年化3.8%, 超额+35%, 信息比率0.55)
+  improved_v2:
+    name: "改进v2: ROE+动量+低PE+毛利+现金流"
+    source: "聚宽回测验证 2021-2025"
+    verified_cagr: 3.82
+    verified_excess: 35.0
+    verified_ir: 0.55
+    verified_maxdd: 21.15
+    pool: "沪深300"
+    factors:
+      - quality_roe              # 30%权重
+      - momentum_6m              # 25%权重
+      - value_pe_ttm             # 20%权重
+      - quality_gross_margin     # 15%权重
+      - safety_ocf_to_profit     # 10%权重
+    weights:
+      quality_roe: 0.30
+      momentum_6m: 0.25
+      value_pe_ttm: 0.20
+      quality_gross_margin: 0.15
+      safety_ocf_to_profit: 0.10
+    top_n: 20
+    rebalance: monthly
+    sort_orders:
+      quality_roe: desc
+      momentum_6m: desc
+      value_pe_ttm: asc
+      quality_gross_margin: desc
+      safety_ocf_to_profit: desc
+    filters:
+      pe_positive: true
+      ocf_quality_min: -2
+      current_ratio_min: 0.5

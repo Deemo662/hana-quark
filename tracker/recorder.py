@@ -36,6 +36,17 @@ class DailyRecorder:
             },
             "top_n": 20,
         },
+        "improved_v2": {
+            "name": "改进v2: ROE+动量+低PE+毛利+现金流",
+            "factors": ["quality_roe", "momentum_6m", "value_pe_ttm",
+                       "quality_gross_margin", "safety_ocf_to_profit"],
+            "sort_orders": {
+                "quality_roe": "desc", "momentum_6m": "desc",
+                "value_pe_ttm": "asc", "quality_gross_margin": "desc",
+                "safety_ocf_to_profit": "desc",
+            },
+            "top_n": 20,
+        },
     }
 
     def __init__(self, strategy_name: str = "best_five_factor"):
