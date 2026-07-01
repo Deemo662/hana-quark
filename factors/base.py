@@ -53,9 +53,22 @@ class FactorData:
 
 
 class BaseFactor(ABC):
-    """因子基类"""
-    name: str = ""
-    category: str = ""
+    """
+    因子基类
+    
+    【书本元数据字段】（第1重防线）
+    每个因子必须填写以下字段，用于：
+    1. 自动验证因子方向是否与书本一致
+    2. 回测结果交叉验证
+    3. 防止AI幻觉——没有书本依据的因子禁止加入策略
+    """
+    name: str = ""                          # 因子中文名
+    category: str = ""                      # 类别：value/quality/growth/momentum/size/safety/dividend
+    book_chapter: str = ""                  # ★书本章节，如 "第3章"
+    book_conclusion: str = ""               # ★书本核心结论，如 "低PE优于高PE，最优分位12.57%"
+    direction: str = ""                     # ★方向：higher_better / lower_better / middle_better
+    book_best_quintile_return: float = 0.0  # ★书本最优分位年化收益率（用于交叉验证）
+    book_worst_quintile_return: float = 0.0 # ★书本最差分位年化收益率
 
     @abstractmethod
     def compute(self, data: FactorData) -> pd.Series:
@@ -64,6 +77,23 @@ class BaseFactor(ABC):
         返回: pd.Series, index=stock_code, values=因子原始值
         """
         ...
+
+    def validate_metadata(self) -> list[str]:
+        """
+        自检：元数据是否完整
+        
+        Returns:
+            缺失字段列表，空列表=通过
+        """
+        missing = []
+        if not self.name: missing.append("name")
+        if not self.category: missing.append("category")
+        if not self.book_chapter: missing.append("book_chapter")
+        if not self.book_conclusion: missing.append("book_conclusion")
+        if not self.direction: missing.append("direction")
+        if self.direction not in ('higher_better', 'lower_better', 'middle_better'):
+            missing.append(f"direction值无效: {self.direction}")
+        return missing
 
     def winsorize(self, series: pd.Series, pct: float = 0.01) -> pd.Series:
         """去极值：将超过百分位阈值的值截断"""
