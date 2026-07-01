@@ -79,6 +79,7 @@ class DataCache:
                 pre_close REAL,                  -- 前收盘价（后复权）
                 volume REAL,                     -- 成交量（股）
                 amount REAL,                     -- 成交额（元）
+                turnover REAL,                   -- 换手率（%）
                 is_st INTEGER DEFAULT 0,         -- 当日是否ST
                 is_suspend INTEGER DEFAULT 0,    -- 当日是否停牌（1=停牌）
                 created_at TEXT DEFAULT (datetime('now')),
@@ -143,6 +144,8 @@ class DataCache:
                 total_assets REAL,
                 total_liabilities REAL,
                 asset_liability_ratio REAL,      -- 资产负债率
+                ev2sales REAL,                   -- 企业价值/销售额
+                equity_to_debt REAL,             -- 归属母公司权益/带息债务
                 
                 created_at TEXT DEFAULT (datetime('now')),
                 PRIMARY KEY (code, report_date)

@@ -18,13 +18,18 @@ import pandas as pd
 import numpy as np
 import time
 import logging
+import threading
 from datetime import date, datetime, timedelta
-from typing import Optional, List
+from typing import Optional, List, Tuple
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 
 from .cache import DataCache
 
 logger = logging.getLogger(__name__)
+
+# 建议线程数：Baostock是网络IO密集型，10线程能显著加速
+DEFAULT_WORKERS = 10
 
 
 class BaostockFetcher:
@@ -151,42 +156,56 @@ class BaostockFetcher:
         return df
     
     # ===================================================================
-    # 日K线
+    # 日K线（多线程）
     # ===================================================================
     
     def _fetch_all_kline(self, cache: DataCache, codes: list, start: str, end: str):
-        """拉取所有股票的日K线（含PE/PB/PS/PCF）"""
-        logger.info(f"\n[2/3] 获取日K线+估值指标（{len(codes)} 只股票）...")
-        logger.info("  ⚠ 首次拉取全量约需20-40分钟")
+        """多线程拉取日K线+估值指标"""
+        n_workers = min(DEFAULT_WORKERS, len(codes))
+        logger.info(f"\n[2/3] 获取日K线+估值指标（{len(codes)} 只, {n_workers}线程）...")
+        logger.info("  ⚠ 预计10-30分钟（取决于股票数量）")
         
-        kline_total, kline_errors = 0, 0
-        fin_rows = []  # 估值指标也存到financial_data表
-        
-        # 转换日期格式：YYYYMMDD → YYYY-MM-DD (Baostock格式)
         start_bs = f"{start[:4]}-{start[4:6]}-{start[6:8]}"
         end_bs = f"{end[:4]}-{end[4:6]}-{end[6:8]}"
         
-        for code in tqdm(codes, desc="  拉取K线"):
+        kline_total, kline_errors = 0, 0
+        fin_rows = []
+        write_lock = threading.Lock()
+        
+        def fetch_one(code):
+            """单个worker：拉取一只股票的K线（线程内独立login/logout）"""
+            bs.login()
             try:
                 bs_code = self._to_bs_code(code)
                 kline_df, fin_df = self._fetch_single_kline(bs_code, code, start_bs, end_bs)
-                
-                if len(kline_df) > 0:
-                    cache.save_daily_kline(kline_df)
-                    kline_total += len(kline_df)
-                
-                if len(fin_df) > 0:
-                    fin_rows.append(fin_df)
-                
-                if len(kline_df) == 0 and len(fin_df) == 0:
-                    kline_errors += 1
-                    
+                return code, kline_df, fin_df, None
             except Exception as e:
-                kline_errors += 1
-                if kline_errors <= 5:
-                    logger.warning(f"  {code} 失败: {e}")
+                return code, pd.DataFrame(), pd.DataFrame(), str(e)
+            finally:
+                bs.logout()
         
-        # 保存估值快照到financial_data表
+        with ThreadPoolExecutor(max_workers=n_workers) as executor:
+            futures = {executor.submit(fetch_one, code): code for code in codes}
+            
+            with tqdm(total=len(codes), desc="  拉取K线") as pbar:
+                for future in as_completed(futures):
+                    code, kline_df, fin_df, error = future.result()
+                    
+                    if error:
+                        kline_errors += 1
+                        if kline_errors <= 5:
+                            logger.warning(f"  {code} 失败: {error}")
+                    else:
+                        with write_lock:
+                            if len(kline_df) > 0:
+                                cache.save_daily_kline(kline_df)
+                                kline_total += len(kline_df)
+                            if len(fin_df) > 0:
+                                fin_rows.append(fin_df)
+                    
+                    pbar.update(1)
+        
+        # 保存估值快照
         if fin_rows:
             all_fin = pd.concat(fin_rows, ignore_index=True)
             cache.save_financial_data(all_fin)
@@ -223,23 +242,22 @@ class BaostockFetcher:
         df = pd.DataFrame(rows, columns=rs.fields)
         
         # ---- 转换K线数据 ----
-        kline = pd.DataFrame()
-        kline['code'] = raw_code
-        kline['trade_date'] = df['date'].str.replace('-', '')
-        kline['open'] = pd.to_numeric(df['open'], errors='coerce')
-        kline['high'] = pd.to_numeric(df['high'], errors='coerce')
-        kline['low'] = pd.to_numeric(df['low'], errors='coerce')
-        kline['close'] = pd.to_numeric(df['close'], errors='coerce')
-        kline['pre_close'] = pd.to_numeric(df['preclose'], errors='coerce')
-        kline['volume'] = pd.to_numeric(df['volume'], errors='coerce')
-        kline['amount'] = pd.to_numeric(df['amount'], errors='coerce')
-        
-        # 停牌标记：成交量为0
-        kline['is_suspend'] = (kline['volume'] == 0).astype(int)
-        kline['is_st'] = (df['isST'] == '1').astype(int)
-        
-        # 换手率
-        kline['turnover'] = pd.to_numeric(df['turn'], errors='coerce')
+        # ★从df直接构建，避免空DataFrame导致的NaN问题
+        n = len(df)
+        kline = pd.DataFrame({
+            'code': [raw_code] * n,
+            'trade_date': df['date'].str.replace('-', ''),
+            'open': pd.to_numeric(df['open'], errors='coerce'),
+            'high': pd.to_numeric(df['high'], errors='coerce'),
+            'low': pd.to_numeric(df['low'], errors='coerce'),
+            'close': pd.to_numeric(df['close'], errors='coerce'),
+            'pre_close': pd.to_numeric(df['preclose'], errors='coerce'),
+            'volume': pd.to_numeric(df['volume'], errors='coerce'),
+            'amount': pd.to_numeric(df['amount'], errors='coerce'),
+            'turnover': pd.to_numeric(df['turn'], errors='coerce'),
+            'is_suspend': (pd.to_numeric(df['volume'], errors='coerce') == 0).astype(int),
+            'is_st': (df['isST'] == '1').astype(int),
+        })
         
         # 过滤NaN收盘价
         kline = kline[kline['close'].notna() & (kline['close'] > 0)]
@@ -286,28 +304,46 @@ class BaostockFetcher:
         return kline, fin
     
     # ===================================================================
-    # 财务数据（季报）
+    # 财务数据（季报，多线程）
     # ===================================================================
     
     def _fetch_all_financial(self, cache: DataCache, codes: list):
-        """拉取季报财务数据（ROE/ROA/毛利率等）"""
-        logger.info(f"\n[3/3] 获取季报财务数据（{len(codes)} 只股票）...")
-        logger.info("  ⚠ 每只股票约需查询多年季报，预计需要30-60分钟")
+        """多线程拉取季报财务数据"""
+        n_workers = min(DEFAULT_WORKERS, len(codes))
+        logger.info(f"\n[3/3] 获取季报财务数据（{len(codes)} 只, {n_workers}线程）...")
+        logger.info("  ⚠ 预计30分钟~2小时（取决于股票数量）")
         
         total, errors = 0, 0
+        write_lock = threading.Lock()
         
-        for code in tqdm(codes, desc="  拉取财务数据"):
+        def fetch_one(code):
+            """单个worker：拉取一只股票所有季报"""
+            bs.login()
             try:
                 df = self._fetch_single_financial(code)
-                if len(df) > 0:
-                    cache.save_financial_data(df)
-                    total += len(df)
-                else:
-                    errors += 1
+                return code, df, None
             except Exception as e:
-                errors += 1
-                if errors <= 5:
-                    logger.warning(f"  {code} 失败: {e}")
+                return code, pd.DataFrame(), str(e)
+            finally:
+                bs.logout()
+        
+        with ThreadPoolExecutor(max_workers=n_workers) as executor:
+            futures = {executor.submit(fetch_one, code): code for code in codes}
+            
+            with tqdm(total=len(codes), desc="  拉取财务数据") as pbar:
+                for future in as_completed(futures):
+                    code, df, error = future.result()
+                    
+                    if error:
+                        errors += 1
+                        if errors <= 5:
+                            logger.warning(f"  {code} 失败: {error}")
+                    elif len(df) > 0:
+                        with write_lock:
+                            cache.save_financial_data(df)
+                            total += len(df)
+                    
+                    pbar.update(1)
         
         cache.log_update('financial', '', '', total)
         logger.info(f"  ✓ 财务数据: {total}条, 失败{errors}只")

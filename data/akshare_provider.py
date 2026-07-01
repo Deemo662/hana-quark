@@ -344,7 +344,7 @@ class AkShareFetcher:
         cache.log_update('financial', '', '', total)
         logger.info(f"  ✓ 财务数据: {total}条, 失败{errors}只")
 
-    def _fetch_single_financial(self, code: str) -> pd.DataFrame:
+    def _fetch_single_financial(self, code: str, close_price: float = None) -> pd.DataFrame:
         """
         从 stock_financial_abstract 提取财务指标
 
@@ -420,8 +420,9 @@ class AkShareFetcher:
                 total_shares = net_profit / eps
 
             # 获取该报告期的收盘价来计算估值
-            # 需要从已缓存的K线中查找
-            close_price = self._get_close_price(code, col)
+            # 优先使用传入的close_price，否则从缓存中查找
+            if close_price is None:
+                close_price = self._get_close_price(code, col)
 
             if close_price and total_shares and total_shares > 0:
                 market_cap = close_price * total_shares
