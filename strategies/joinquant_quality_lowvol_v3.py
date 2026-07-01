@@ -59,7 +59,7 @@ def rebalance(context):
 def get_factor_data(context, pool):
     q = query(
         valuation.code, valuation.pe_ratio,
-        indicator.roe, indicator.roic, indicator.gross_profit_margin,
+        indicator.roe, indicator.gross_profit_margin,
         cash_flow.net_operate_cash_flow, income.net_profit,
     ).filter(valuation.code.in_(pool))
     df = get_fundamentals(q, date=context.current_dt)
@@ -68,7 +68,7 @@ def get_factor_data(context, pool):
     
     df['pe_clean'] = df['pe_ratio'].apply(lambda x: x if (x and 0 < x < g.max_pe) else None)
     df['ocf_quality'] = (df['net_operate_cash_flow'] / df['net_profit'].replace(0, np.nan)).clip(-5, 5)
-    df['roic_clean'] = df['roic'].fillna(df['roe'])
+    df['roic_clean'] = df['roe']
     
     codes = df.index.tolist()
     prices = history(126, '1d', 'close', codes, df=False, skip_paused=True)
