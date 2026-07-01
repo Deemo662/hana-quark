@@ -72,12 +72,14 @@ def rebalance(context):
 def build_universe(context):
     """
     构建股票池
-    ★ 用中证800（沪深300+中证500）作为初始池，800只覆盖面够广
+    ★ 用中证800作为初始池
     """
-    # 沪深300 + 中证500 = 中证800
     pool = get_index_stocks('000906.XSHG')  # 中证800
     
     current_data = get_current_data()
+    
+    # ★获取上市日期（get_current_data不含start_date，需单独取）
+    securities_info = get_all_securities(['stock'], context.current_dt)
     
     # ★五维过滤
     filtered = []
@@ -88,10 +90,11 @@ def build_universe(context):
         # 2. ST → 跳过
         if current_data[s].is_st:
             continue
-        # 3. 上市不足500天 → 跳过（防次新股爆雷）
-        days_listed = (context.current_dt.date() - current_data[s].start_date).days
-        if days_listed < g.min_list_days:
-            continue
+        # 3. 上市不足500天 → 跳过
+        if s in securities_info.index:
+            days_listed = (context.current_dt.date() - securities_info.loc[s, 'start_date'].date()).days
+            if days_listed < g.min_list_days:
+                continue
         filtered.append(s)
     
     return filtered

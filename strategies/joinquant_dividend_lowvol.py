@@ -33,10 +33,11 @@ def rebalance(context):
     # 股票池: 中证800
     pool = get_index_stocks('000906.XSHG')
     current_data = get_current_data()
+    securities_info = get_all_securities(['stock'], context.current_dt)
     pool = [s for s in pool 
             if not current_data[s].paused 
             and not current_data[s].is_st
-            and (context.current_dt.date() - current_data[s].start_date).days > 500]
+            and (context.current_dt.date() - securities_info.loc[s, 'start_date'].date()).days > 500]
     if len(pool) < 30: return
     
     # ---- 股息率 ----
