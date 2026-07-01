@@ -37,7 +37,7 @@ def rebalance(context):
     pool = [s for s in pool 
             if not current_data[s].paused 
             and not current_data[s].is_st
-            and (context.current_dt.date() - securities_info.loc[s, 'start_date'].date()).days > 500]
+            and (context.current_dt.date() - securities_info.loc[s, 'start_date']).days > 500]
     if len(pool) < 30: return
     
     # ---- 股息率 ----

@@ -92,7 +92,7 @@ def build_universe(context):
             continue
         # 3. 上市不足500天 → 跳过
         if s in securities_info.index:
-            days_listed = (context.current_dt.date() - securities_info.loc[s, 'start_date'].date()).days
+            days_listed = (context.current_dt.date() - securities_info.loc[s, 'start_date']).days
             if days_listed < g.min_list_days:
                 continue
         filtered.append(s)
