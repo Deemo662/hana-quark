@@ -235,13 +235,15 @@ class BaostockFetcher:
         logger.info(f"  ✓ 财务: {total}条, 失败{errors}只")
     
     def _fetch_one_financial(self, code: str) -> pd.DataFrame:
-        """拉取一只股票所有季报（2010-2026）"""
+        """拉取一只股票季报（2020-2025，减少API调用防限流）"""
+        import time as _time
         bs_code = self._to_bs(code)
         rows = []
         
-        for year in range(2010, 2027):
+        for year in range(2020, 2026):  # ★减为6年，减少68%的API调用
             for q in range(1, 5):
                 try:
+                    _time.sleep(0.3)  # ★加延迟防限流
                     rs = bs.query_profit_data(code=bs_code, year=year, quarter=q)
                     while (rs.error_code == '0') & rs.next():
                         data = rs.get_row_data()
