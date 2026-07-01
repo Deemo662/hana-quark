@@ -1,5 +1,6 @@
 # ============================================================
-# 质量低波选股策略 v3 增强版
+# 质量低波 v3（中证800池 + 择时 + ROIC）
+# 全A股池有代码格式兼容问题，改用中证800保持稳定
 # ============================================================
 import pandas as pd
 import numpy as np
@@ -10,84 +11,57 @@ def initialize(context):
     set_order_cost(OrderCost(open_commission=0.00025, close_commission=0.00025,
                              close_tax=0.0005, min_commission=5), type='stock')
     g.stock_num = 25; g.max_pe = 200; g.min_list_days = 500
-    g.ma_period = 200; g.max_sector_pct = 0.30; g.cash_buffer = 0.02
+    g.ma_period = 200; g.cash_buffer = 0.02
     g.debug = True
     run_monthly(rebalance, monthday=1, time='open')
 
 def rebalance(context):
-    # ===== 大盘择时 =====
+    # ===== 择时 =====
     hs300 = history(g.ma_period, '1d', 'close', ['000300.XSHG'], df=False, skip_paused=True)
     if '000300.XSHG' in hs300 and len(hs300['000300.XSHG']) > 0:
         ma200 = pd.Series(hs300['000300.XSHG']).mean()
         current = hs300['000300.XSHG'][-1]
-        if g.debug: log.info(f"HS300: {current:.0f} vs MA200: {ma200:.0f} ({'空仓' if current < ma200 else '持仓'})")
+        if g.debug and context.current_dt.month == 1:
+            log.info(f"择时: {current:.0f} vs MA200 {ma200:.0f} ({'空仓' if current < ma200 else '持仓'})")
         if current < ma200:
             for code in list(context.portfolio.positions.keys()):
                 order_target_value(code, 0)
             return
-    else:
-        if g.debug: log.warn("HS300数据为空，跳过择时")
     
     # ===== 股票池 =====
-    pool = build_universe(context)
+    pool = get_index_stocks('000906.XSHG')  # 中证800
+    current_data = get_current_data()
+    sec_info = get_all_securities(['stock'], context.current_dt)
+    pool = [s for s in pool
+            if not current_data[s].paused
+            and not current_data[s].is_st
+            and (s in sec_info.index and 
+                 (context.current_dt.date() - sec_info.loc[s, 'start_date']).days > g.min_list_days)]
+    
     if g.debug: log.info(f"股票池: {len(pool)}只")
     if len(pool) < 30: return
     
     # ===== 因子 =====
     df = get_factor_data(context, pool)
     if df is None or len(df) < 20:
-        if g.debug: log.warn(f"因子数据: {len(df) if df is not None else 0}条")
+        if g.debug: log.warn(f"因子数据不足: {len(df) if df is not None else 0}条")
         return
-    if g.debug: log.info(f"有效因子数据: {len(df)}只")
+    if g.debug: log.info(f"有效因子: {len(df)}只")
     
     # ===== 打分 =====
     df = calculate_scores(df)
-    top5 = df.sort_values('total_score', ascending=False).head(5).index.tolist()
-    if g.debug: log.info(f"TOP5: {top5}")
-    
-    # ===== 选股 =====
     selected = df.sort_values('total_score', ascending=False).head(g.stock_num).index.tolist()
-    if g.debug: log.info(f"入选: {len(selected)}只")
+    if g.debug: log.info(f"入选: {len(selected)}只, TOP3: {selected[:3]}")
     
     # ===== 调仓 =====
     execute_trades(context, selected)
 
-def build_universe(context):
-    """全A股池 + 过滤"""
-    pool = list(get_all_securities(['stock'], context.current_dt).index)
-    current_data = get_current_data()
-    sec_info = get_all_securities(['stock'], context.current_dt)
-    
-    valid = []
-    for s in pool:
-        if s not in current_data or current_data[s].paused or current_data[s].is_st:
-            continue
-        if s in sec_info.index:
-            days = (context.current_dt.date() - sec_info.loc[s, 'start_date']).days
-            if days < g.min_list_days: continue
-        valid.append(s)
-    
-    if len(valid) < 50: return valid
-    
-    # 批量PE/市值过滤
-    q = query(valuation.code, valuation.pe_ratio, valuation.market_cap
-             ).filter(valuation.code.in_(valid[:2000]))  # ★限制2000只防超时
-    df = get_fundamentals(q, date=context.current_dt)
-    if df is None or len(df) == 0: return valid[:2000]
-    
-    df = df[(df['pe_ratio'] > 0) & (df['pe_ratio'] < g.max_pe)]
-    if 'market_cap' in df.columns and len(df) > 50:
-        df = df[df['market_cap'] > df['market_cap'].quantile(0.20)]
-    
-    return df['code'].tolist()
-
 def get_factor_data(context, pool):
-    """因子数据"""
     q = query(
         valuation.code, valuation.pe_ratio,
         indicator.roe, indicator.roic, indicator.gross_profit_margin,
         cash_flow.net_operate_cash_flow, income.net_profit,
-    ).filter(valuation.code.in_(pool[:1000]))  # ★限制1000只
+    ).filter(valuation.code.in_(pool))
     df = get_fundamentals(q, date=context.current_dt)
     if df is None or len(df) == 0: return None
     df = df.set_index('code')
@@ -96,7 +70,6 @@ def get_factor_data(context, pool):
     df['ocf_quality'] = (df['net_operate_cash_flow'] / df['net_profit'].replace(0, np.nan)).clip(-5, 5)
     df['roic_clean'] = df['roic'].fillna(df['roe'])
     
-    # 波动率
     codes = df.index.tolist()
     prices = history(126, '1d', 'close', codes, df=False, skip_paused=True)
     vol_data = {}
@@ -107,10 +80,10 @@ def get_factor_data(context, pool):
                 vol_data[code] = s.pct_change().dropna().std() * np.sqrt(252)
     df['volatility_6m'] = pd.Series(vol_data)
     
-    # 股息率
+    # 股息率(可选)
     try:
         div_q = query(valuation.code, valuation.dividend_yield_ratio
-                     ).filter(valuation.code.in_(codes[:500]))
+                     ).filter(valuation.code.in_(codes))
         div_df = get_fundamentals(div_q, date=context.current_dt)
         if div_df is not None and len(div_df) > 0:
             df['dividend_yield'] = div_df.set_index('code')['dividend_yield_ratio']
