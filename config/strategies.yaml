@@ -1,35 +1,86 @@
-# 策略定义
-strategies:
-  # ===== 书中验证的最强策略 =====
+# ============================================================
+# 策略定义 v2 — 基于2026年市场调研升级
+# ============================================================
+# 核心变化：去市值+加股息+紧股票池+强化排雷
+# ============================================================
 
-  # 🥇 全书最佳：市值+毛利率+ROIC+6月波动率+PS 五因子
-  best_five_factor:
-    name: "市值+毛利率+ROIC+6月波动率+PS"
-    book_ref: "第15章，表15-52"
-    book_cagr_20: 18.44   # 书中20只年化
-    book_cagr_40: 16.75   # 书中40只年化
+strategies:
+
+  # ========== v2 新策略（主推） ==========
+
+  quality_lowvol:
+    name: "质量低波（ROE+毛利率+波动率+PB+现金流排雷）"
+    note: "去市值、重质量——注册制后更稳健的选择"
     factors:
-      - size_market_cap         # 市值（升序=小市值优先）
-      - quality_gross_margin     # 毛利率
-      - quality_roic            # 投入资本回报率
-      - momentum_volatility_6m   # 6个月波动率（升序=低波优先）
-      - value_ps_ttm            # 市销率（升序=低估值优先）
+      - quality_roe
+      - quality_gross_margin
+      - momentum_volatility_6m
+      - value_pb
+      - safety_ocf_to_profit
+    weights: equal
+    top_n: 25
+    rebalance: monthly
+    sort_orders:
+      quality_roe: desc
+      quality_gross_margin: desc
+      momentum_volatility_6m: asc
+      value_pb: asc
+      safety_ocf_to_profit: desc
+
+  dividend_lowvol:
+    name: "红利低波（股息率+波动率）"
+    note: "2023-2025最强策略，确定性溢价时代"
+    factors:
+      - dividend_yield
+      - momentum_volatility_6m
+    weights: equal
+    top_n: 30
+    rebalance: quarterly
+    sort_orders:
+      dividend_yield: desc
+      momentum_volatility_6m: asc
+
+  quality_dividend:
+    name: "质量红利（ROE+股息率+低波）"
+    note: "能赚钱+愿分红+波动小，排除价值陷阱"
+    factors:
+      - quality_roe
+      - dividend_yield
+      - momentum_volatility_6m
+    weights: equal
+    top_n: 25
+    rebalance: monthly
+    sort_orders:
+      quality_roe: desc
+      dividend_yield: desc
+      momentum_volatility_6m: asc
+
+  # ========== v1升级版（去市值因子） ==========
+
+  best_five_factor:
+    name: "五因子v2（毛利率+ROIC+波动率+PS+OCF排雷）"
+    book_cagr_20: 18.44
+    note: "原TOP1去市值，OCF排雷替代"
+    factors:
+      - quality_gross_margin
+      - quality_roic
+      - momentum_volatility_6m
+      - value_ps_ttm
+      - safety_ocf_to_profit
     weights: equal
     top_n: 20
     rebalance: monthly
     sort_orders:
-      size_market_cap: asc
       quality_gross_margin: desc
       quality_roic: desc
       momentum_volatility_6m: asc
       value_ps_ttm: asc
+      safety_ocf_to_profit: desc
 
-  # 🥈 ROE+6月波动率 双因子
   roe_lowvol:
-    name: "ROE+6月波动率"
-    book_ref: "第15章，表15-19"
+    name: "ROE+6月波动率（原TOP3）"
     book_cagr_20: 16.90
-    book_cagr_40: 16.48
+    note: "双因子，不依赖市值，质量因子注册制后增强"
     factors:
       - quality_roe
       - momentum_volatility_6m
@@ -40,34 +91,10 @@ strategies:
       quality_roe: desc
       momentum_volatility_6m: asc
 
-  # 🥉 中小市值改进神奇公式
-  magic_formula_improved:
-    name: "中小市值改进神奇公式"
-    book_ref: "第15章，表15-61"
-    book_cagr_20: 16.48
-    book_cagr_40: 15.52
-    factors:
-      - size_market_cap
-      - momentum_volatility_6m
-      - quality_roic
-      - quality_gross_margin
-      - value_ev2ebitda
-    weights: equal
-    top_n: 20
-    rebalance: monthly
-    sort_orders:
-      size_market_cap: asc
-      momentum_volatility_6m: asc
-      quality_roic: desc
-      quality_gross_margin: desc
-      value_ev2ebitda: asc
-
-  # PB+低波动 双因子（保守型）
   pb_lowvol:
-    name: "PB+6月波动率"
-    book_ref: "第15章，表15-10"
+    name: "PB+6月波动率（保守型）"
     book_cagr_20: 15.14
-    book_cagr_40: 14.92
+    note: "低估值+低波动，熊市防御"
     factors:
       - value_pb
       - momentum_volatility_6m
@@ -78,12 +105,9 @@ strategies:
       value_pb: asc
       momentum_volatility_6m: asc
 
-  # EV/Sales+ROE+权益/带息债务+波动率+动量 五因子
   five_factor_v2:
-    name: "EV/Sales+ROE+权益/带息债务+6月波动率+3月动量"
-    book_ref: "第15章，表15-46"
+    name: "EV/Sales+ROE+权益/带息债务+波动率+动量"
     book_cagr_20: 17.26
-    book_cagr_40: 17.23
     factors:
       - value_ev2sales
       - quality_roe
@@ -99,37 +123,3 @@ strategies:
       safety_equity2debt: desc
       momentum_volatility_6m: asc
       momentum_3m: desc
-
-  # 🏆 改进v2: 聚宽回测验证最优 (2021-2025年化3.8%, 超额+35%, 信息比率0.55)
-  improved_v2:
-    name: "改进v2: ROE+动量+低PE+毛利+现金流"
-    source: "聚宽回测验证 2021-2025"
-    verified_cagr: 3.82
-    verified_excess: 35.0
-    verified_ir: 0.55
-    verified_maxdd: 21.15
-    pool: "沪深300"
-    factors:
-      - quality_roe              # 30%权重
-      - momentum_6m              # 25%权重
-      - value_pe_ttm             # 20%权重
-      - quality_gross_margin     # 15%权重
-      - safety_ocf_to_profit     # 10%权重
-    weights:
-      quality_roe: 0.30
-      momentum_6m: 0.25
-      value_pe_ttm: 0.20
-      quality_gross_margin: 0.15
-      safety_ocf_to_profit: 0.10
-    top_n: 20
-    rebalance: monthly
-    sort_orders:
-      quality_roe: desc
-      momentum_6m: desc
-      value_pe_ttm: asc
-      quality_gross_margin: desc
-      safety_ocf_to_profit: desc
-    filters:
-      pe_positive: true
-      ocf_quality_min: -2
-      current_ratio_min: 0.5
